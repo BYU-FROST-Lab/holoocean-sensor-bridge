@@ -18,11 +18,11 @@ find_package(holoocean_interfaces REQUIRED)
 # add_executable(coug_kinematics tutorials/coug_kinematics.cpp)
 # ament_target_dependencies(couguv_teleop_key rclcpp holoocean_interfaces)
 
-add_executable(couguv_teleop_key tutorials/teleop_couguv_key.cpp)
-ament_target_dependencies(couguv_teleop_key rclcpp holoocean_interfaces)
+# add_executable(couguv_teleop_key tutorials/teleop_couguv_key.cpp)
+# ament_target_dependencies(couguv_teleop_key rclcpp holoocean_interfaces)
 
-install(TARGETS couguv_teleop_key 
-  DESTINATION lib/${PROJECT_NAME})
+# install(TARGETS couguv_teleop_key 
+#   DESTINATION lib/${PROJECT_NAME})
 
 
 if(BUILD_TESTING)
