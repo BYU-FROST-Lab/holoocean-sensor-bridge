@@ -17,36 +17,45 @@ def generate_launch_description():
     vehicle_namespace = 'coug0'
 
     depth = launch_ros.actions.Node(
-        name='depth_reverse',
+        name='pressure_converter',
         package='sim_converters',
-        executable='depth_reverse',  
+        executable='depth_convert',  
         namespace=vehicle_namespace,
         output='screen',
         parameters=[params_file]  
     )
 
     gps = launch_ros.actions.Node(
-        name='gps_reverse',
+        name='gps_convert',
         package='sim_converters',
-        executable='gps_reverse',  
+        executable='gps_convert',  
         namespace=vehicle_namespace,
         output='screen',
         parameters=[params_file]  
     )
 
     dvl = launch_ros.actions.Node(
-        name='dvl_reverse',
+        name='dvl_convert',
         package='sim_converters',
-        executable='dvl_reverse',  
+        executable='dvl_convert',  
         namespace=vehicle_namespace,
         output='screen',
         parameters=[params_file]  
     )
 
     imu = launch_ros.actions.Node(
-        name='imu_reverse',
+        name='imu_convert',
         package='sim_converters',
-        executable='imu_reverse',  
+        executable='imu_convert',  
+        namespace=vehicle_namespace,
+        output='screen',
+        parameters=[params_file]  
+    )
+
+    ucommand = launch_ros.actions.Node(
+        name='u_cmd_bridge',
+        package='sim_converters',
+        executable='ucommand_bridge',  
         namespace=vehicle_namespace,
         output='screen',
         parameters=[params_file]  
@@ -55,8 +64,9 @@ def generate_launch_description():
     return LaunchDescription([
         depth,
         dvl,
-        gps,
+        # gps,
         imu,
+        ucommand
     ])
 
 

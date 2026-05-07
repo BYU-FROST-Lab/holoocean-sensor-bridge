@@ -7,14 +7,19 @@
     water_salinity_ppt: 0.0
     fluid_pressure_atm: 87250.0
     holoocean_vehicle: "auv0"
-    frost_vehicle: "coug2"
+    frost_vehicle: "coug0"
+
+coug0:
+  pressure_converter:
+    ros__parameters:
+      fluid_density: 1025.0
+      fluid_pressure_atm: 87250.0
+      odometry_topic: '/holoocean/auv0/DepthSensor'
+      pressure_topic: 'pressure/data'
 
 
-# depth_reverse:
-#   ros__parameters:
 
-
-ucommand_bridge:
-  ros__parameters:
-    fin_scalar: -3.0
-    publish_thruster: false
+  ucommand_bridge:
+    ros__parameters:
+      fin_scalar: -3.0
+      publish_thruster: false

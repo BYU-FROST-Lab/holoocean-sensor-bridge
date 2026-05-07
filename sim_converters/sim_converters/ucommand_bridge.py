@@ -1,60 +1,58 @@
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Header
-from holoocean_interfaces.msg import ControlCommand
-from cougars_interfaces.msg import UCommand
+from holoocean_interfaces.msg import AgentCommand
+from cougars_interfaces.msg import ActuatorCommand
 import math
 
 
-class UCommandBridge(Node):
+class ActuatorCommandBridge(Node):
     def __init__(self):
-        super().__init__('ucommand_bridge')
+        super().__init__('u_cmd_bridge')
 
         # Declare parameters
-        self.declare_parameter('frost_vehicle', 'coug1')
         self.declare_parameter('holoocean_vehicle', 'auv0')
         self.declare_parameter('fin_scalar', 1.0)
         self.declare_parameter('publish_thruster', False)
 
         # Get parameter values
-        frost_vehicle = self.get_parameter('frost_vehicle').get_parameter_value().string_value
-        holoocean_vehicle = self.get_parameter('holoocean_vehicle').get_parameter_value().string_value
+        self.holoocean_vehicle = self.get_parameter('holoocean_vehicle').get_parameter_value().string_value
         self.fin_scalar = self.get_parameter('fin_scalar').get_parameter_value().double_value
         self.publish_thruster = self.get_parameter('publish_thruster').get_parameter_value().bool_value
 
         # Construct topic names from parameters
-        frost_topic = f'/{frost_vehicle}/controls/command'
-        holoocean_topic = f'/holoocean/{holoocean_vehicle}/ControlCommand'
+        holoocean_pub_topic = f'/holoocean/command/agent'
+        vehicle_topic = 'control/u_cmd'
 
         # Subscriptions
-        self.frost_sub = self.create_subscription(
-            UCommand,
-            frost_topic,
-            self.frost_callback,
+        self.u_cmd_sub = self.create_subscription(
+            ActuatorCommand,
+            vehicle_topic,
+            self.u_cmd_callback,
             10
         )
 
         self.holoocean_sub = self.create_subscription(
-            ControlCommand,
-            holoocean_topic,
+            AgentCommand,
+            '/holoocean/' + self.holoocean_vehicle + '/ControlCommand',
             self.holoocean_callback,
             10
         )
 
         # Publishers
-        self.frost_pub = self.create_publisher(
-            UCommand,
-            frost_topic,
+        self.u_cmd_pub = self.create_publisher(
+            ActuatorCommand,
+            vehicle_topic,
             10
         )
 
         self.holoocean_pub = self.create_publisher(
-            ControlCommand,
-            "/holoocean/command/control",
+            AgentCommand,
+            holoocean_pub_topic,
             10
         )
 
-    def frost_callback(self, msg: UCommand):
+    def u_cmd_callback(self, msg: ActuatorCommand):
         # If this was sent from the bridge ignore the passing back to holoocean
         if msg.header.frame_id == "holoocean_to_frost":
             return
@@ -67,26 +65,25 @@ class UCommandBridge(Node):
         thruster = float(msg.thruster) * 15 
 
         # Pack into CommandControl message
-        control_msg = ControlCommand()
+        control_msg = AgentCommand()
         control_msg.header = Header()
         control_msg.header.stamp = self.get_clock().now().to_msg()
-        control_msg.header.frame_id = self.get_parameter('holoocean_vehicle').get_parameter_value().string_value
-        control_msg.cs = fins_rad + [thruster]
+        control_msg.header.frame_id = self.holoocean_vehicle
+        control_msg.command = fins_rad + [thruster]
 
 
 
         self.holoocean_pub.publish(control_msg)
-        # self.get_logger().info("Forwarded to holoocean control/command")
 
-    def holoocean_callback(self, msg: ControlCommand):
-        if len(msg.cs) < 3:
-            self.get_logger().warn("ControlCommand message has fewer than 3 fins")
+    def holoocean_callback(self, msg: AgentCommand):
+        if len(msg.command) < 3:
+            self.get_logger().warn("AgentCommand message has fewer than 3 fins")
             return
 
         # Convert fin angles from radians to degrees and apply scalar
-        fins_deg = [math.degrees(angle) * self.fin_scalar for angle in msg.cs[:3]]
+        fins_deg = [math.degrees(angle) * self.fin_scalar for angle in msg.command[:3]]
 
-        u_cmd_msg = UCommand()
+        u_cmd_msg = ActuatorCommand()
         u_cmd_msg.header = Header()
         u_cmd_msg.header.stamp = self.get_clock().now().to_msg()
         u_cmd_msg.header.frame_id = "holoocean_to_frost"
@@ -94,16 +91,15 @@ class UCommandBridge(Node):
 
         # Thruster: only publish if enabled
 
-        u_cmd_msg.thruster = int(msg.cs[3]) if (self.publish_thruster and len(msg.cs) >= 4) else 0
+        u_cmd_msg.thruster = int(msg.command[3]) if (self.publish_thruster and len(msg.command) >= 4) else 0
 
         # TODO: Need to figure out how to handle when running holoocean commands
-        # self.frost_pub.publish(u_cmd_msg)
-        # self.get_logger().info("Forwarded to frost UCommand")
+        self.u_cmd_pub.publish(u_cmd_msg)
 
 
 def main(args=None):
     rclpy.init(args=args)
-    node = UCommandBridge()
+    node = ActuatorCommandBridge()
     rclpy.spin(node)
     node.destroy_node()
     rclpy.shutdown()
