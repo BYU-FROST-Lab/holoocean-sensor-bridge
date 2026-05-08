@@ -4,6 +4,8 @@ import rclpy
 from rclpy.node import Node
 from gps_msgs.msg import GPSFix
 from nav_msgs.msg import Odometry
+from geographic_msgs.msg import GeoPoint
+from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy
 import math
 
 EARTH_RADIUS_METERS = 6371000
@@ -45,10 +47,35 @@ class OdomToNavSatFix(Node):
             10
         )
         
+        # qos reliable transient local
+        qos = QoSProfile(
+            reliability=ReliabilityPolicy.RELIABLE,
+            durability=DurabilityPolicy.TRANSIENT_LOCAL,
+            depth=10
+        )
+
+        self.origin_sub = self.create_subscription(
+            GeoPoint,
+            '/origin',
+            self.origin_callback,
+            qos
+        )
+
         self.last_msg = None
 
         # Publisher for GPSFix
         self.publisher = self.create_publisher(GPSFix, frost_vehicle + '/extended_fix', 10)
+
+    def origin_callback(self, msg: GeoPoint):
+        '''
+        Callback function for the GeoPoint subscription.
+        Updates the origin parameters based on the received GeoPoint message.
+        
+        :param msg: The GeoPoint message received from the /origin topic.
+        '''
+        self.set_parameter(rclpy.Parameter('origin.latitude', rclpy.Parameter.Type.DOUBLE, msg.latitude))
+        self.set_parameter(rclpy.Parameter('origin.longitude', rclpy.Parameter.Type.DOUBLE, msg.longitude))
+        self.set_parameter(rclpy.Parameter('origin.altitude', rclpy.Parameter.Type.DOUBLE, msg.altitude))
     
     def odom_callback(self, msg: Odometry):
         '''
