@@ -3,6 +3,7 @@
 import rclpy
 from rclpy.node import Node
 from gps_msgs.msg import GPSFix
+from sensor_msgs.msg import NavSatFix
 from nav_msgs.msg import Odometry
 from geographic_msgs.msg import GeoPoint
 from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy
@@ -56,7 +57,7 @@ class OdomToNavSatFix(Node):
 
         self.origin_sub = self.create_subscription(
             GeoPoint,
-            '/origin',
+            frost_vehicle + '/origin',
             self.origin_callback,
             qos
         )
@@ -65,6 +66,7 @@ class OdomToNavSatFix(Node):
 
         # Publisher for GPSFix
         self.publisher = self.create_publisher(GPSFix, frost_vehicle + '/extended_fix', 10)
+        self.fix_pub = self.create_publisher(NavSatFix, frost_vehicle + '/fix', qos)
 
     def origin_callback(self, msg: GeoPoint):
         '''
@@ -73,10 +75,14 @@ class OdomToNavSatFix(Node):
         
         :param msg: The GeoPoint message received from the /origin topic.
         '''
-        self.set_parameter(rclpy.Parameter('origin.latitude', rclpy.Parameter.Type.DOUBLE, msg.latitude))
-        self.set_parameter(rclpy.Parameter('origin.longitude', rclpy.Parameter.Type.DOUBLE, msg.longitude))
-        self.set_parameter(rclpy.Parameter('origin.altitude', rclpy.Parameter.Type.DOUBLE, msg.altitude))
-    
+        self.set_parameters([
+            rclpy.Parameter('origin.latitude', rclpy.Parameter.Type.DOUBLE, msg.latitude),
+            rclpy.Parameter('origin.longitude', rclpy.Parameter.Type.DOUBLE, msg.longitude),
+            rclpy.Parameter('origin.altitude', rclpy.Parameter.Type.DOUBLE, msg.altitude),
+        ])
+        # log updated origin
+        self.get_logger().info(f'Updated origin: latitude={msg.latitude}, longitude={msg.longitude}, altitude={msg.altitude}')  
+
     def odom_callback(self, msg: Odometry):
         '''
         Callback function for the Odometry subscription.
@@ -109,6 +115,15 @@ class OdomToNavSatFix(Node):
         gps_fix.position_covariance[4] = msg.pose.covariance[7]  # yy
         gps_fix.position_covariance[8] = msg.pose.covariance[14]  # zz
         gps_fix.position_covariance_type = 2  # COVARIANCE_TYPE_DIAGONAL_KNOWN
+
+        fix = NavSatFix()
+        fix.header = gps_fix.header
+        fix.latitude = gps_fix.latitude
+        fix.longitude = gps_fix.longitude
+        fix.altitude = gps_fix.altitude
+        fix.position_covariance = gps_fix.position_covariance
+        fix.position_covariance_type = gps_fix.position_covariance_type
+        self.fix_pub.publish(fix)
 
         # Publish the GPSFix message
         self.last_msg = gps_fix
