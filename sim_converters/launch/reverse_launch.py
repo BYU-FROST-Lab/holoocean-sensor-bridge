@@ -64,7 +64,7 @@ def generate_launch_description():
     return LaunchDescription([
         depth,
         dvl,
-        # gps,
+        gps,
         imu,
         ucommand
     ])
