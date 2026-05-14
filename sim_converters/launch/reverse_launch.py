@@ -13,11 +13,11 @@ def generate_launch_description():
 
     base = Path(get_package_share_directory('sim_converters'))
     params_file = base / 'config' / 'config.yaml'
-    use_sim_time_launch_arg = DeclareLaunchArgument(
-        'use_sim_time',
+    sim_launch_arg = DeclareLaunchArgument(
+        'sim',
         default_value='False'
     )
-    use_sim_time = LaunchConfiguration('use_sim_time')
+    sim = LaunchConfiguration('sim')
 
     # List contents of the directory to debug
     
@@ -29,7 +29,7 @@ def generate_launch_description():
         executable='depth_convert',  
         namespace=vehicle_namespace,
         output='screen',
-        parameters=[params_file, {'use_sim_time': use_sim_time}]  
+        parameters=[params_file, {'use_sim_time': sim}]  
     )
 
     gps = launch_ros.actions.Node(
@@ -38,7 +38,7 @@ def generate_launch_description():
         executable='gps_convert',  
         namespace=vehicle_namespace,
         output='screen',
-        parameters=[params_file, {'use_sim_time': use_sim_time}]  
+        parameters=[params_file, {'use_sim_time': sim}]  
     )
 
     dvl = launch_ros.actions.Node(
@@ -47,7 +47,7 @@ def generate_launch_description():
         executable='dvl_convert',  
         namespace=vehicle_namespace,
         output='screen',
-        parameters=[params_file, {'use_sim_time': use_sim_time}]  
+        parameters=[params_file, {'use_sim_time': sim}]  
     )
 
     imu = launch_ros.actions.Node(
@@ -56,7 +56,7 @@ def generate_launch_description():
         executable='imu_convert',  
         namespace=vehicle_namespace,
         output='screen',
-        parameters=[params_file, {'use_sim_time': use_sim_time}]  
+        parameters=[params_file, {'use_sim_time': sim}]  
     )
 
     ucommand = launch_ros.actions.Node(
@@ -65,11 +65,11 @@ def generate_launch_description():
         executable='ucommand_bridge',  
         namespace=vehicle_namespace,
         output='screen',
-        parameters=[params_file, {'use_sim_time': use_sim_time}]  
+        parameters=[params_file, {'use_sim_time': sim}]  
     )
 
     return LaunchDescription([
-        use_sim_time_launch_arg,
+        sim_launch_arg,
         depth,
         dvl,
         gps,
