@@ -1,6 +1,7 @@
 import rclpy
 from rclpy.node import Node
 import numpy as np
+from rclpy.qos import qos_profile_sensor_data
 from geometry_msgs.msg import TwistWithCovarianceStamped
 from dvl_msgs.msg import DVL, DVLDR
 from holoocean_interfaces.msg import DVLSensorRange
@@ -14,8 +15,8 @@ class DVLConverter(Node):
         self.declare_parameter('holoocean_vehicle', 'auv0')
         holoocean_vehicle = self.get_parameter('holoocean_vehicle').get_parameter_value().string_value
 
-        self.DVL_publisher_ = self.create_publisher(DVL, 'dvl/data', 10)
-        self.DVLDR_publisher_ = self.create_publisher(DVLDR, 'dvl/position', 10)
+        self.DVL_publisher_ = self.create_publisher(DVL, 'dvl/data', qos_profile_sensor_data)
+        self.DVLDR_publisher_ = self.create_publisher(DVLDR, 'dvl/position', qos_profile_sensor_data)
 
         self.DVLVelocity_subscription = self.create_subscription(
             TwistWithCovarianceStamped,
@@ -73,7 +74,7 @@ class DVLConverter(Node):
 
     def altitude_callback(self, msg: DVLSensorRange):
         # TODO handle case where not all beams hit? 
-        # TODO: Fix this when we get to updating the DVL Simulation in HoloOcean
+        # TODO: Fix this when we get to updatipublish_msgng the DVL Simulation in HoloOcean
         self.altitude = float(sum(msg.range) / len(msg.range))
     
     
