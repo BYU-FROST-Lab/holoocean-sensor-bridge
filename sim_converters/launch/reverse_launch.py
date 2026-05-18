@@ -2,7 +2,7 @@
 # Author: Braden Meyers
 
 from launch import LaunchDescription
-import launch_ros.actions
+from launch_ros.actions import Node
 from ament_index_python.packages import get_package_share_directory
 from pathlib import Path
 from launch.actions import DeclareLaunchArgument
@@ -23,7 +23,7 @@ def generate_launch_description():
     
     vehicle_namespace = 'coug0'
 
-    depth = launch_ros.actions.Node(
+    depth = Node(
         name='pressure_converter',
         package='sim_converters',
         executable='depth_convert',  
@@ -32,7 +32,7 @@ def generate_launch_description():
         parameters=[params_file, {'use_sim_time': sim}]  
     )
 
-    gps = launch_ros.actions.Node(
+    gps = Node(
         name='gps_convert',
         package='sim_converters',
         executable='gps_convert',  
@@ -41,16 +41,24 @@ def generate_launch_description():
         parameters=[params_file, {'use_sim_time': sim}]  
     )
 
-    dvl = launch_ros.actions.Node(
-        name='dvl_convert',
-        package='sim_converters',
-        executable='dvl_convert',  
+    # dvl = Node(
+    #     name='dvl_convert',
+    #     package='sim_converters',
+    #     executable='dvl_convert',  
+    #     namespace=vehicle_namespace,
+    #     output='screen',
+    #     parameters=[params_file, {'use_sim_time': sim}]  
+    # )
+
+    dvl = Node(
+        name='dvl_converter_node',
+        package='holoocean_bridge',
+        executable='dvl_converter',  
         namespace=vehicle_namespace,
         output='screen',
-        parameters=[params_file, {'use_sim_time': sim}]  
-    )
+        parameters=[params_file, {'use_sim_time': sim}])
 
-    imu = launch_ros.actions.Node(
+    imu = Node(
         name='imu_convert',
         package='sim_converters',
         executable='imu_convert',  
@@ -59,7 +67,7 @@ def generate_launch_description():
         parameters=[params_file, {'use_sim_time': sim}]  
     )
 
-    ucommand = launch_ros.actions.Node(
+    ucommand = Node(
         name='u_cmd_bridge',
         package='sim_converters',
         executable='ucommand_bridge',  
@@ -67,6 +75,15 @@ def generate_launch_description():
         output='screen',
         parameters=[params_file, {'use_sim_time': sim}]  
     )
+    ucommand = Node(
+        name='u_cmd_bridge',
+        package='sim_converters',
+        executable='ucommand_bridge',  
+        namespace=vehicle_namespace,
+        output='screen',
+        parameters=[params_file, {'use_sim_time': sim}]  
+    )
+
 
     return LaunchDescription([
         sim_launch_arg,

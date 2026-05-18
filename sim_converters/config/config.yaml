@@ -23,3 +23,13 @@ coug0:
     ros__parameters:
       fin_scalar: -3.0
       publish_thruster: false
+
+  dvl_converter_node:
+    ros__parameters:
+      vel_topic: "/holoocean/auv0/DVLSensorVelocity"
+      range_topic: "/holoocean/auv0/DVLSensorRange"
+      output_topic: "dvl/data"
+      beam_elevation_deg: [20.0, 20.0, 20.0, 20.0]  # [deg] 
+      beam_azimuth_deg: [45.0, 135.0, 225.0, 315.0]  # [deg] 
+
+      # noise_sigmas: [0.02, 0.02, 0.02] # [m/s] DVL body-velocity uncertainty sigmas.
