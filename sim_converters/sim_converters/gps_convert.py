@@ -13,9 +13,6 @@ EARTH_RADIUS_METERS = 6371000
 
 class OdomToNavSatFix(Node):
     '''
-    :author: [Your Name]
-    :date: December 2024
-
     A simple ROS2 node that subscribes to the gps_odom topic and converts the Odometry data to GPSFix messages.
     The Odometry data is converted from local Cartesian coordinates to latitude, longitude, and altitude.
 
@@ -31,15 +28,9 @@ class OdomToNavSatFix(Node):
         super().__init__('gps_fix')
         
         # Declare parameters for the origin (datum)
-        self.declare_parameter('origin.latitude', 34.0219)
-        self.declare_parameter('origin.longitude', -118.4814)
-        self.declare_parameter('origin.altitude', 0.0)
         self.declare_parameter('holoocean_vehicle', 'auv0')
-        holoocean_vehicle = self.get_parameter('holoocean_vehicle').get_parameter_value().string_value
+        holoocean_vehicle = self.get_parameter('holoocean_vehicle').value
 
-        self.declare_parameter('frost_vehicle', 'coug1')
-        frost_vehicle = self.get_parameter('frost_vehicle').get_parameter_value().string_value
-        
         # Subscribe to Odometry
         self.subscriber = self.create_subscription(
             Odometry,
@@ -57,16 +48,16 @@ class OdomToNavSatFix(Node):
 
         self.origin_sub = self.create_subscription(
             GeoPoint,
-            frost_vehicle + '/origin',
+            '/origin',
             self.origin_callback,
             qos
         )
-
+        self.origin = None
         self.last_msg = None
 
         # Publisher for GPSFix
-        self.publisher = self.create_publisher(GPSFix, frost_vehicle + '/extended_fix', 10)
-        self.fix_pub = self.create_publisher(NavSatFix, frost_vehicle + '/fix', qos)
+        self.publisher = self.create_publisher(GPSFix, 'extended_fix', 10)
+        self.fix_pub = self.create_publisher(NavSatFix, 'fix', qos)
 
     def origin_callback(self, msg: GeoPoint):
         '''
@@ -75,13 +66,8 @@ class OdomToNavSatFix(Node):
         
         :param msg: The GeoPoint message received from the /origin topic.
         '''
-        self.set_parameters([
-            rclpy.Parameter('origin.latitude', rclpy.Parameter.Type.DOUBLE, msg.latitude),
-            rclpy.Parameter('origin.longitude', rclpy.Parameter.Type.DOUBLE, msg.longitude),
-            rclpy.Parameter('origin.altitude', rclpy.Parameter.Type.DOUBLE, msg.altitude),
-        ])
-        # log updated origin
-        self.get_logger().info(f'Updated origin: latitude={msg.latitude}, longitude={msg.longitude}, altitude={msg.altitude}')  
+        self.origin = msg
+        self.get_logger().info(f'Updated origin: latitude={msg.latitude}, longitude={msg.longitude}, altitude={msg.altitude}')
 
     def odom_callback(self, msg: Odometry):
         '''
@@ -90,16 +76,20 @@ class OdomToNavSatFix(Node):
         
         :param msg: The Odometry message received from the gps_odom topic.
         '''
+        if self.origin is None:
+            self.get_logger().warn('Origin not set yet. Cannot convert Odometry to GPSFix.')
+            return
+
         # Convert local Cartesian coordinates to latitude/longitude
         lat, lon = self.calculate_inverse_haversine(
-            self.get_parameter('origin.latitude').get_parameter_value().double_value,
-            self.get_parameter('origin.longitude').get_parameter_value().double_value,
+            self.origin.latitude,
+            self.origin.longitude,
             msg.pose.pose.position.x,
             msg.pose.pose.position.y
         )
         
         # Calculate altitude
-        alt = msg.pose.pose.position.z + self.get_parameter('origin.altitude').get_parameter_value().double_value
+        alt = msg.pose.pose.position.z + self.origin.altitude
 
         # Fill in the GPSFix message
         gps_fix = GPSFix()
