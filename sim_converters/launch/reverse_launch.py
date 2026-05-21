@@ -13,85 +13,72 @@ def generate_launch_description():
 
     base = Path(get_package_share_directory('sim_converters'))
     params_file = base / 'config' / 'config.yaml'
-    sim_launch_arg = DeclareLaunchArgument(
-        'sim',
-        default_value='False'
-    )
-    sim = LaunchConfiguration('sim')
-
-    # List contents of the directory to debug
     
+    sim = LaunchConfiguration('sim')
+    # todo FIX hardcoded namespace
     vehicle_namespace = 'coug0'
 
-    depth = Node(
-        name='pressure_converter',
-        package='sim_converters',
-        executable='depth_convert',  
-        namespace=vehicle_namespace,
-        output='screen',
-        parameters=[params_file, {'use_sim_time': sim}]  
-    )
-
-    gps = Node(
-        name='gps_convert',
-        package='sim_converters',
-        executable='gps_convert',  
-        namespace=vehicle_namespace,
-        output='screen',
-        parameters=[params_file, {'use_sim_time': sim}]  
-    )
-
-    # dvl = Node(
-    #     name='dvl_convert',
-    #     package='sim_converters',
-    #     executable='dvl_convert',  
-    #     namespace=vehicle_namespace,
-    #     output='screen',
-    #     parameters=[params_file, {'use_sim_time': sim}]  
-    # )
-
-    dvl = Node(
-        name='dvl_converter_node',
-        package='holoocean_bridge',
-        executable='dvl_converter',  
-        namespace=vehicle_namespace,
-        output='screen',
-        parameters=[params_file, {'use_sim_time': sim}])
-
-    imu = Node(
-        name='imu_convert',
-        package='sim_converters',
-        executable='imu_convert',  
-        namespace=vehicle_namespace,
-        output='screen',
-        parameters=[params_file, {'use_sim_time': sim}]  
-    )
-
-    ucommand = Node(
-        name='u_cmd_bridge',
-        package='sim_converters',
-        executable='ucommand_bridge',  
-        namespace=vehicle_namespace,
-        output='screen',
-        parameters=[params_file, {'use_sim_time': sim}]  
-    )
-    ucommand = Node(
-        name='u_cmd_bridge',
-        package='sim_converters',
-        executable='ucommand_bridge',  
-        namespace=vehicle_namespace,
-        output='screen',
-        parameters=[params_file, {'use_sim_time': sim}]  
-    )
-
-
     return LaunchDescription([
-        sim_launch_arg,
-        depth,
-        dvl,
-        gps,
-        imu,
-        ucommand
+        DeclareLaunchArgument(
+            'sim',
+            default_value='False'
+        ),
+        Node(
+            name='pressure_converter',
+            package='sim_converters',
+            executable='depth_convert',  
+            namespace=vehicle_namespace,
+            output='screen',
+            parameters=[params_file, {'use_sim_time': sim}]  
+        ),
+        Node(
+            name='dvl_converter_node',
+            package='holoocean_bridge',
+            executable='dvl_converter',  
+            namespace=vehicle_namespace,
+            output='screen',
+            parameters=[params_file, {'use_sim_time': sim}]
+        ),
+        Node(
+            name='gps_convert',
+            package='sim_converters',
+            executable='gps_convert',  
+            namespace=vehicle_namespace,
+            output='screen',
+            parameters=[params_file, {'use_sim_time': sim}]  
+        ),
+        Node(
+            name='u_cmd_bridge',
+            package='sim_converters',
+            executable='ucommand_bridge',  
+            namespace=vehicle_namespace,
+            output='screen',
+            parameters=[params_file, {'use_sim_time': sim}]  
+        ),
+        Node(
+            package='robot_localization', 
+            executable='ekf_node', 
+            name='ekf_filter_node_odom',
+            namespace=vehicle_namespace,
+            output='screen',
+            parameters=[params_file, {'use_sim_time': sim}],
+            remappings=[('odometry/filtered', 'odometry/dvl')]           
+        ),
+        Node(
+            name='odom_to_dvldr',
+            package='sim_converters',
+            executable='odom_to_dvldr',
+            namespace=vehicle_namespace,
+            output='screen',
+            parameters=[params_file, {'use_sim_time': sim}]
+        ),
+        Node(
+            package='topic_tools',
+            name='sim_imu_source',
+            executable='relay',
+            parameters=[params_file, {'use_sim_time': sim}],
+            namespace=vehicle_namespace,
+        ),
     ])
 
 

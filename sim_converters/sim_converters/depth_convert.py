@@ -40,6 +40,7 @@ class PressureConverter(Node):
     def depth_callback(self, depth_msg):
         pressure_msg = FluidPressure()
         pressure_msg.header = depth_msg.header
+        pressure_msg.header.frame_id = depth_msg.child_frame_id
 
         # Convert depth to pressure, negative downward
         depth = -depth_msg.pose.pose.position.z

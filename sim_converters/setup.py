@@ -29,6 +29,7 @@ setup(
             'gps_convert = sim_converters.gps_convert:main',
             'imu_convert = sim_converters.imu_convert:main',
             'ucommand_bridge = sim_converters.ucommand_bridge:main',
+            'odom_to_dvldr = sim_converters.odom_to_dvldr:main',
         ],
     },
 )

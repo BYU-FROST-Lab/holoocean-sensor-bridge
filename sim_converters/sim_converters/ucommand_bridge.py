@@ -94,7 +94,8 @@ class ActuatorCommandBridge(Node):
         u_cmd_msg.thruster = int(msg.command[3]) if (self.publish_thruster and len(msg.command) >= 4) else 0
 
         # TODO: Need to figure out how to handle when running holoocean commands
-        self.u_cmd_pub.publish(u_cmd_msg)
+        # TODO make this not work for right now
+        # self.u_cmd_pub.publish(u_cmd_msg)
 
 
 def main(args=None):

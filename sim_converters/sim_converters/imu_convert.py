@@ -25,10 +25,12 @@ class ImuCombiner(Node):
     def __init__(self):
         super().__init__('imu_combiner')
 
-        self.declare_parameter('imu_topic', '/holoocean/auv0/IMUSensor')
-        imu_topic = self.get_parameter('imu_topic').get_parameter_value().string_value
-        self.declare_parameter('orientation_topic', '/holoocean/auv0/DynamicsSensorIMU')
-        orientation_topic = self.get_parameter('orientation_topic').get_parameter_value().string_value
+        self.declare_parameter('imu_topic', '/holoocean/coug0/IMUSensor')
+        self.declare_parameter('orientation_topic', '/holoocean/coug0/DynamicsSensorIMU')
+        self.declare_parameter('output_topic', 'sim/imu/data')
+        imu_topic = self.get_parameter('imu_topic').value
+        orientation_topic = self.get_parameter('orientation_topic').value
+        output_topic = self.get_parameter('output_topic').value
 
         self.orientation_queue = deque(maxlen=MAX_QUEUE)
         self.imu_queue = deque(maxlen=MAX_QUEUE)
@@ -45,7 +47,7 @@ class ImuCombiner(Node):
             self.imu_callback,
             10)
 
-        self.publisher = self.create_publisher(Imu, 'imu/data', 10)
+        self.publisher = self.create_publisher(Imu, output_topic, 10)
 
     def orientation_callback(self, msg):
         idx = _find_match(self.imu_queue, msg.header.stamp)

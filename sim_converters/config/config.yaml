@@ -2,7 +2,7 @@
   ros__parameters:
     water_salinity_ppt: 0.0
     fluid_pressure_atm: 87250.0
-    holoocean_vehicle: "auv0"
+    holoocean_vehicle: "coug0"
     frost_vehicle: "coug0"
 
 coug0:
@@ -10,10 +10,8 @@ coug0:
     ros__parameters:
       fluid_density: 1025.0
       fluid_pressure_atm: 87250.0
-      odometry_topic: '/holoocean/auv0/DepthSensor'
+      odometry_topic: '/holoocean/coug0/DepthSensor'
       pressure_topic: 'pressure/data'
-
-
 
   ucommand_bridge:
     ros__parameters:
@@ -22,10 +20,50 @@ coug0:
 
   dvl_converter_node:
     ros__parameters:
-      vel_topic: "/holoocean/auv0/DVLSensorVelocity"
-      range_topic: "/holoocean/auv0/DVLSensorRange"
+      vel_topic: "/holoocean/coug0/DVLSensorVelocity"
+      range_topic: "/holoocean/coug0/DVLSensorRange"
       output_topic: "dvl/data"
       beam_elevation_deg: [20.0, 20.0, 20.0, 20.0]  # [deg] 
       beam_azimuth_deg: [45.0, 135.0, 225.0, 315.0]  # [deg] 
 
       # noise_sigmas: [0.02, 0.02, 0.02] # [m/s] DVL body-velocity uncertainty sigmas.
+
+  sim_imu_source:
+    ros__parameters:
+      input_topic: "/holoocean/coug0/IMUDynamics"
+      output_topic: "imu/data"
+  
+  ekf_filter_node_odom:
+    ros__parameters:
+      map_frame: map
+      odom_frame: coug0/dvl_odom_ned
+      base_link_frame: coug0/dvl_link
+      world_frame: coug0/dvl_odom_ned
+
+      frequency: 30.0
+      sensor_timeout: 0.2
+      two_d_mode: false
+      publish_tf: false
+      print_diagnostics: false
+
+
+      twist0: /holoocean/coug0/DVLSensorVelocity
+      twist0_config: [false, false, false, # X, Y, Z
+                      false, false, false, # Roll, Pitch, Yaw
+                      true,  true,  true,  # Vx, Vy, Vz
+                      false, false, false, # Vroll, Vpitch, Vyaw
+                      false, false, false] # Ax, Ay, Az
+      twist0_queue_size: 5
+
+      imu0: imu/data
+      imu0_config: [false, false, false, # X, Y, Z
+                    false, false, false, # Roll, Pitch, Yaw
+                    false, false, false, # Vx, Vy, Vz
+                    true,  true,  true,  # Vroll, Vpitch, Vyaw
+                    true,  true,  true]  # Ax, Ay, Az
+      imu0_queue_size: 15
+      imu0_differential: false
+      imu0_relative: false
+      imu0_remove_gravitational_acceleration: true
+
+      use_control: false
